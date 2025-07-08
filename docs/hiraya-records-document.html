@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 Hiraya Bot Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎤</text></svg>') no-repeat center;
+            opacity: 0.1;
+            background-size: 200px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section h3 {
+            color: #34495e;
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem 0;
+        }
+
+        .section h4 {
+            color: #667eea;
+            font-size: 1.3rem;
+            margin: 1.5rem 0 0.5rem 0;
+            font-weight: 600;
+        }
+
+        .command-block {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .command-block code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .example-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-line;
+            overflow-x: auto;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .feature-card h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .steps {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            position: relative;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .step h4 {
+            margin-top: 0;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+
+        .config-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .permission-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .permission-table th,
+        .permission-table td {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            text-align: left;
+        }
+
+        .permission-table th {
+            background: #667eea;
+            color: white;
+        }
+
+        .permission-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: background 0.3s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .back-to-top:hover {
+            background: #5a6fd8;
+        }
+
+        @media (max-width: 768px) {
+            .nav ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Code syntax highlighting */
+        .language-javascript {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎤 Hiraya Bot Documentation</h1>
+            <p>Complete guide for Karaoke Queue System and Artist Profile Management</p>
+        </header>
+
+        <nav class="nav">
+            <ul>
+                <li><a href="#karaoke-system">🎵 Karaoke Queue</a></li>
+                <li><a href="#artist-system">🎨 Artist Profiles</a></li>
+                <li><a href="#configuration">⚙️ Configuration</a></li>
+                <li><a href="#troubleshooting">🆘 Troubleshooting</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <section id="karaoke-system" class="section">
+                <h2>🎵 Karaoke Queue System</h2>
+                <p>The karaoke queue system allows users to join a singing queue and moderators to manage the flow of performers.</p>
+
+                <h3>📋 Prerequisites</h3>
+                <div class="info">
+                    <ul>
+                        <li>Users must be in a voice channel to join the queue</li>
+                        <li>Moderators need specific roles or "Manage Channels" permission to control the queue</li>
+                    </ul>
+                </div>
+
+                <h3>🎯 Basic User Commands</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="icon">➕</span>
+                        <h4>Join the Queue</h4>
+                        <div class="command-block">
+                            <code>/joinqueue</code><br>
+                            <code>?joinqueue</code>
+                        </div>
+                        <p><strong>What it does:</strong> Adds you to the karaoke queue</p>
+                        <p><strong>Requirements:</strong> Must be in a voice channel</p>
+                        <div class="example-output">✅ Queue Joined
+@YourName has joined the queue!
+Position: #3 in queue
+Total in queue: 3</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="icon">➖</span>
+                        <h4>Leave the Queue</h4>
+                        <div class="command-block">
+                            <code>/leavequeue</code><br>
+                            <code>?leavequeue</code>
+                        </div>
+                        <p><strong>What it does:</strong> Removes you from the karaoke queue</p>
+                        <div class="example-output">❌ Left Queue
+@YourName has left the queue.
+Total in queue: 2</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="icon">📋</span>
+                        <h4>View Current Queue</h4>
+                        <div class="command-block">
+                            <code>/showqueue</code><br>
+                            <code>?showqueue</code>
+                        </div>
+                        <p><strong>What it does:</strong> Shows the current queue status and performers</p>
+                        <div class="example-output">🎤 Karaoke Queue - STARTED
+
+🎤 Up Now!          ⏭️ Up Next!         3️⃣ #3
+@CurrentSinger     @NextSinger        @ThirdSinger
+
+                    and 5 people left in the queue</div>
+                    </div>
+                </div>
+
+                <h3>🔧 Moderator Commands</h3>
+                
+                <div class="steps">
+                    <div class="step">
+                        <h4>Start the Queue</h4>
+                        <div class="command-block">
+                            <code>/startqueue</code><br>
+                            <code>?startqueue</code>
+                        </div>
+                        <p><strong>What it does:</strong> Officially starts the karaoke session</p>
+                        <p><strong>Requirements:</strong> Moderator permissions, at least 1 person in queue</p>
+                        <div class="example-output">🎤 Queue Started
+Queue has been started!
+
+Current performer: @FirstSinger
+Total in queue: 5</div>
+                    </div>
+
+                    <div class="step">
+                        <h4>Move to Next Performer</h4>
+                        <div class="command-block">
+                            <code>/nextqueue</code><br>
+                            <code>?nextqueue</code><br>
+                            <code>?nq</code><br>
+                            <code>?next</code>
+                        </div>
+                        <p><strong>What it does:</strong> Moves to the next person in queue and pings them</p>
+                        <div class="example-output">Queue Progress
+@PreviousSinger has finished their turn.
+
+🎤 Up Now!          ⏭️ Up Next!         3️⃣ #3
+@NewCurrent        @NextPerson        @ThirdPerson
+
+                    and 3 people left in the queue</div>
+                        <div class="info">
+                            <strong>Note:</strong> The new current performer also receives a ping message that auto-deletes after 3 seconds
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Additional Moderator Commands</h4>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Add Someone to Queue</h4>
+                        <div class="command-block">
+                            <code>/addqueue @user</code><br>
+                            <code>?addqueue @user</code>
+                        </div>
+                        <p>Adds a specified user to the queue</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Remove Someone from Queue</h4>
+                        <div class="command-block">
+                            <code>/removequeue @user</code><br>
+                            <code>?removequeue @user</code>
+                        </div>
+                        <p>Removes a specified user from the queue</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Move User Position</h4>
+                        <div class="command-block">
+                            <code>/movequeue @user 3</code><br>
+                            <code>?movequeue @user 3</code>
+                        </div>
+                        <p>Moves a user to a specific position in the queue</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Shuffle Queue</h4>
+                        <div class="command-block">
+                            <code>/shufflequeue</code><br>
+                            <code>?shufflequeue</code>
+                        </div>
+                        <p>Randomly shuffles the order of people in queue</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Lock/Unlock Queue</h4>
+                        <div class="command-block">
+                            <code>/lockqueue</code><br>
+                            <code>?lockqueue</code>
+                        </div>
+                        <p>Prevents new users from joining the queue</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Clear Queue</h4>
+                        <div class="command-block">
+                            <code>/clearqueue</code><br>
+                            <code>?clearqueue</code>
+                        </div>
+                        <p>Removes all users from queue and resets the system</p>
+                    </div>
+                </div>
+
+                <h3>🔄 Auto-Management Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="icon">⏭️</span>
+                        <h4>Auto-Skip Absent Users</h4>
+                        <p>If a user is not in a voice channel when it's their turn, they are automatically skipped. The system moves to the next person and notifies the channel.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="icon">⏰</span>
+                        <h4>Auto-Close Empty Queue</h4>
+                        <p>If the queue becomes empty for 30 minutes, it automatically closes. A notification is sent when this happens.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="icon">🔒</span>
+                        <h4>Voice Channel Enforcement</h4>
+                        <p>Users are automatically removed from queue if they leave the voice channel. Users must be in a voice channel to join.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="artist-system" class="section">
+                <h2>🎨 Artist Profile System</h2>
+                <p>The artist profile system allows artists to create detailed profiles with social media links and showcase their work.</p>
+
+                <h3>👥 Who Can Use Artist Profiles</h3>
+                <table class="permission-table">
+                    <thead>
+                        <tr>
+                            <th>User Type</th>
+                            <th>Permissions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Artists</strong></td>
+                            <td>Users with the "Artist" role can create their own profiles</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Admins</strong></td>
+                            <td>Can create profiles for any user</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Anyone</strong></td>
+                            <td>Can view existing artist profiles</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>🎯 Creating an Artist Profile</h3>
+                <div class="steps">
+                    <div class="step">
+                        <h4>Start Profile Creation</h4>
+                        <div class="command-block">
+                            <code>/artist create</code><br>
+                            <code>?artist create</code>
+                        </div>
+                        <p><strong>Admin creating for someone else:</strong></p>
+                        <div class="command-block">
+                            <code>/artist create user:@SomeArtist</code>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <h4>Click the Button</h4>
+                        <p>You'll see an embed with a "Create Artist Profile" button. Click it to open the creation form.</p>
+                    </div>
+
+                    <div class="step">
+                        <h4>Fill Out the Modal</h4>
+                        <p>A form will appear with these fields:</p>
+                        <ul>
+                            <li><strong>Artist Name:</strong> Your display name (max 50 characters)</li>
+                            <li><strong>Profile Link:</strong> Your website/profile URL</li>
+                            <li><strong>Description/Bio:</strong> Brief intro about yourself (max 500 characters)</li>
+                            <li><strong>Banner/Artist Image URL:</strong> Main image for your profile</li>
+                        </ul>
+                        <div class="example-output">Artist Name: DJ Melody
+Profile Link: https://hiraya.website/profile/djmelody
+Description: Electronic music producer and DJ specializing in progressive house and ambient sounds. Performing for 5+ years across various venues.
+Banner Image URL: https://i.imgur.com/artistbanner.jpg</div>
+                    </div>
+
+                    <div class="step">
+                        <h4>Add Social Media (Optional)</h4>
+                        <p>After submitting the main form, you'll be asked if you want to add social media links.</p>
+                        
+                        <div class="info">
+                            <strong>Supported Platforms (with auto-detection):</strong>
+                            <ul>
+                                <li>📺 YouTube</li>
+                                <li>📷 Instagram</li>
+                                <li>🐦 Twitter/X</li>
+                                <li>📘 Facebook</li>
+                                <li>🎵 TikTok</li>
+                                <li>🎶 Spotify</li>
+                                <li>🔊 SoundCloud</li>
+                                <li>💬 Discord</li>
+                            </ul>
+                        </div>
+
+                        <div class="example-output">Social Media Link 1: https://youtube.com/@djmelody
+Social Media Link 2: https://instagram.com/djmelody_official
+Social Media Link 3: https://spotify.com/artist/djmelody</div>
+                    </div>
+
+                    <div class="step">
+                        <h4>Preview and Confirm</h4>
+                        <p>You'll see a final preview of your profile with three options:</p>
+                        <ul>
+                            <li><strong>✅ Confirm:</strong> Save the profile to the database</li>
+                            <li><strong>✏️ Edit:</strong> Make changes to the profile</li>
+                            <li><strong>🗑️ Discard:</strong> Cancel profile creation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>📖 Viewing Artist Profiles</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>View All Artists</h4>
+                        <div class="command-block">
+                            <code>/artist view</code><br>
+                            <code>?artist</code>
+                        </div>
+                        <p>Shows a dropdown menu with all available artists</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>View Specific Artist</h4>
+                        <div class="command-block">
+                            <code>/artist view name:DJ Melody</code><br>
+                            <code>?artist DJ Melody</code>
+                        </div>
+                        <p>Shows the full profile for that specific artist</p>
+                    </div>
+                </div>
+
+                <h4>Example Profile Display</h4>
+                <div class="example-output">🎨 Hiraya Records Artist: DJ Melody
+[Profile Link: https://hiraya.website/profile/djmelody]
+
+Electronic music producer and DJ specializing in progressive house and ambient sounds. 
+Performing for 5+ years across various venues.
+
+[Large banner image displayed]
+[Discord avatar as thumbnail]
+
+[YouTube] [Instagram] [Spotify] [SoundCloud] [Discord]
+                    (Clickable social media buttons)
+
+Footer: ServerName Artist • djmelody_user</div>
+
+                <h3>✏️ Editing Your Artist Profile</h3>
+                <div class="command-block">
+                    <code>/artist edit</code><br>
+                    <code>?artist edit</code>
+                </div>
+                <div class="info">
+                    <strong>What happens:</strong>
+                    <ol>
+                        <li>Opens the same modal as creation, but pre-filled with your current data</li>
+                        <li>All changes are stored temporarily until you confirm</li>
+                        <li>You can preview, edit multiple times, or discard changes</li>
+                        <li>Only saves to database when you click "Confirm"</li>
+                    </ol>
+                </div>
+
+                <h3>🎨 Profile Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="icon">🎭</span>
+                        <h4>Rich Embeds</h4>
+                        <ul>
+                            <li>Custom title with artist name and link</li>
+                            <li>Large banner image</li>
+                            <li>Discord avatar thumbnail</li>
+                            <li>Professional embed styling</li>
+                            <li>Server branding in footer</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="icon">🔗</span>
+                        <h4>Smart Social Media Buttons</h4>
+                        <ul>
+                            <li>Auto-detects platform from URL</li>
+                            <li>Uses appropriate platform emojis/icons</li>
+                            <li>Direct clickable links</li>
+                            <li>Supports up to 5 social media platforms</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <span class="icon">💾</span>
+                        <h4>Temporary Memory System</h4>
+                        <ul>
+                            <li>All edits stored in memory until confirmed</li>
+                            <li>Can make multiple changes before saving</li>
+                            <li>Safe edit/preview/discard workflow</li>
+                            <li>Prevents accidental data loss</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="configuration" class="section">
+                <h2>⚙️ Configuration & Permissions</h2>
+
+                <h3>🎤 Karaoke Permissions</h3>
+                <table class="permission-table">
+                    <thead>
+                        <tr>
+                            <th>Access Level</th>
+                            <th>Requirements</th>
+                            <th>Capabilities</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Moderator Access</strong></td>
+                            <td>
+                                <ul>
+                                    <li>Users with configured moderator roles</li>
+                                    <li>Users with "Manage Channels" permission</li>
+                                </ul>
+                            </td>
+                            <td>Can control queue operations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>User Access</strong></td>
+                            <td>Any server member in a voice channel</td>
+                            <td>Can join queue</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>🎨 Artist Profile Permissions</h3>
+                <table class="permission-table">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Who Can Do It</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Profile Creation</strong></td>
+                            <td>Users with "Artist" role (configured)<br>Users with admin roles (configured)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Profile Viewing</strong></td>
+                            <td>Anyone can view existing profiles</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Profile Editing</strong></td>
+                            <td>Artists can edit their own profiles<br>Admins can edit any profile</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>📝 Configuration Files</h3>
+                <h4>Karaoke Settings: <code>config/config.js</code></h4>
+                <div class="config-block">karaoke: {
+  moderatorRoleIds: ["role_id_1", "role_id_2"]
+}</div>
+
+                <h4>Artist Settings: <code>config/config.js</code></h4>
+                <div class="config-block">artist: {
+  adminRoleIds: ["admin_role_id_1", "admin_role_id_2"],
+  artistRoleNames: ["Artist", "Musician", "Creator"]
+}</div>
+
+                <h3>🔒 Auto-Safety Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Karaoke Queue</h4>
+                        <ul>
+                            <li>Voice channel requirement enforcement</li>
+                            <li>Auto-removal of disconnected users</li>
+                            <li>Queue auto-close after 30 minutes empty</li>
+                            <li>Moderator-only sensitive commands</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>Artist Profiles</h4>
+                        <ul>
+                            <li>URL validation for all links</li>
+                            <li>Permission checks for creation/editing</li>
+                            <li>Temporary data protection</li>
+                            <li>Proper error handling and cleanup</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="troubleshooting" class="section">
+                <h2>🆘 Troubleshooting</h2>
+
+                <h3>Common Karaoke Issues</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>"You must be in a voice channel"</h4>
+                        <div class="warning">
+                            <strong>Solution:</strong> Join any voice channel in the server before using <code>/joinqueue</code>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>"Queue hasn't been started yet"</h4>
+                        <div class="warning">
+                            <strong>Solution:</strong> A moderator needs to use <code>/startqueue</code> before progression commands work
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>"You don't have permission"</h4>
+                        <div class="warning">
+                            <strong>Solution:</strong> Check if you have the required moderator roles or "Manage Channels" permission
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Common Artist Profile Issues</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>"You need the Artist role"</h4>
+                        <div class="warning">
+                            <strong>Solution:</strong> Contact an admin to get the Artist role or have them create your profile
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>"Profile data expired"</h4>
+                        <div class="warning">
+                            <strong>Solution:</strong> The creation session timed out - start over with <code>/artist create</code>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>"Invalid URL" errors</h4>
+                        <div class="warning">
+                            <strong>Solution:</strong> Ensure all URLs start with <code>http://</code> or <code>https://</code>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>📞 Support</h3>
+                <div class="success">
+                    <p>For additional help or feature requests, contact the server administrators or check the bot's help command:</p>
+                    <div class="command-block">
+                        <code>/help</code><br>
+                        <code>?help</code>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p><strong>This documentation covers all features available in the Hiraya Bot's karaoke and artist profile systems.</strong></p>
+            <p>Keep this guide handy for reference! 🎵</p>
+        </footer>
+    </div>
+
+    <a href="#" class="back-to-top">↑</a>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Back to top button functionality
+        const backToTop = document.querySelector('.back-to-top');
+        
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                backToTop.style.display = 'block';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+
+        backToTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Add active class to navigation based on scroll position
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
