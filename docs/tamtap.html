@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TamTap — NFC Attendance System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #0f0f18;
+  --bg3: #13131e;
+  --card: #16161f;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --green: #00e5a0;
+  --green-dim: rgba(0,229,160,0.12);
+  --green-glow: rgba(0,229,160,0.25);
+  --amber: #f0a500;
+  --amber-dim: rgba(240,165,0,0.1);
+  --blue: #4d9fff;
+  --blue-dim: rgba(77,159,255,0.1);
+  --red: #ff4d6d;
+  --red-dim: rgba(255,77,109,0.1);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.1);
+  --text: #e8e8f0;
+  --text2: #8888a0;
+  --text3: #555568;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --display: 'Syne', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-logo::before {
+  content: '';
+  display: block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
+  50% { opacity: 0.5; box-shadow: 0 0 16px var(--green); }
+}
+
+.nav-links {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--green); }
+
+.nav-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 14px;
+  border: 1px solid var(--green);
+  border-radius: 2px;
+  color: var(--green);
+  letter-spacing: 0.08em;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 48px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,160,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,160,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent);
+}
+
+.hero-glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 400px;
+  background: radial-gradient(ellipse, rgba(0,229,160,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--green);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.2s forwards;
+}
+
+.hero h1 {
+  font-family: var(--display);
+  font-size: clamp(56px, 9vw, 120px);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.4s forwards;
+}
+
+.hero h1 .accent {
+  color: var(--green);
+  position: relative;
+  display: inline-block;
+}
+
+.hero h1 .accent::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: 0; right: 0;
+  height: 3px;
+  background: var(--green);
+  opacity: 0.4;
+}
+
+.hero-sub {
+  font-size: 18px;
+  color: var(--text2);
+  font-weight: 300;
+  max-width: 560px;
+  margin-bottom: 48px;
+  line-height: 1.6;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.6s forwards;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.8s forwards;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--green);
+  color: #0a0a0f;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: #00ffc0;
+  box-shadow: 0 0 30px var(--green-glow);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  margin-top: 80px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+  opacity: 0;
+  animation: fadeUp 0.8s 1s forwards;
+}
+
+.stat-item {}
+
+.stat-num {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.stat-num span { color: var(--green); }
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SECTIONS ── */
+section {
+  padding: 100px 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-label::before {
+  content: '';
+  display: block;
+  width: 24px; height: 1px;
+  background: var(--green);
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.section-desc {
+  color: var(--text2);
+  font-size: 17px;
+  font-weight: 300;
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 64px;
+}
+
+/* ── OVERVIEW / HOW IT WORKS ── */
+.flow-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.flow-step {
+  background: var(--card);
+  padding: 36px 28px;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.flow-step:hover { background: var(--bg3); }
+
+.flow-step::after {
+  content: attr(data-arrow);
+  position: absolute;
+  top: 50%;
+  right: -14px;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--green);
+  z-index: 2;
+}
+
+.flow-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+}
+
+.flow-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 16px;
+  display: block;
+  filter: invert(72%) sepia(60%) saturate(400%) hue-rotate(115deg) brightness(1.1);
+}
+
+.hw-card-icon img {
+  width: 32px;
+  height: 32px;
+  filter: invert(72%) sepia(60%) saturate(400%) hue-rotate(115deg) brightness(1.1);
+}
+
+.db-card-header img {
+  width: 18px;
+  height: 18px;
+  filter: invert(72%) sepia(60%) saturate(400%) hue-rotate(115deg) brightness(1.1);
+}
+
+.flow-step h3 {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.flow-step p {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* ── ARCHITECTURE ── */
+.arch-section { background: var(--bg2); }
+
+.arch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.arch-layer {
+  background: var(--card);
+  padding: 32px;
+}
+
+.arch-layer-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.arch-layer-label.python { background: var(--purple-dim); color: var(--purple); }
+.arch-layer-label.node { background: var(--amber-dim); color: var(--amber); }
+.arch-layer-label.frontend { background: var(--blue-dim); color: var(--blue); }
+.arch-layer-label.hardware { background: var(--green-dim); color: var(--green); }
+.arch-layer-label.data { background: var(--red-dim); color: var(--red); }
+
+.arch-layer h3 {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.arch-layer p {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.arch-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text2);
+}
+
+/* ── HARDWARE ── */
+.hw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.hw-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.hw-card:hover {
+  border-color: var(--green);
+  transform: translateY(-2px);
+}
+
+.hw-card-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 16px;
+}
+
+.hw-card h3 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.hw-card .hw-model {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  margin-bottom: 10px;
+}
+
+.hw-card p {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* ── STACK ── */
+.stack-section { background: var(--bg2); }
+
+.stack-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.stack-col-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.stack-col-title.py { color: var(--purple); }
+.stack-col-title.js { color: var(--amber); }
+.stack-col-title.fe { color: var(--blue); }
+
+.stack-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stack-item:last-child { border-bottom: none; }
+
+.stack-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.stack-dot.py { background: var(--purple); }
+.stack-dot.js { background: var(--amber); }
+.stack-dot.fe { background: var(--blue); }
+
+.stack-item-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.stack-item-desc {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+/* ── DATABASE ── */
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.db-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.db-card-header {
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-collection-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.db-card-body {
+  padding: 16px 20px;
+}
+
+.db-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 12px;
+}
+
+.db-field-name {
+  font-family: var(--mono);
+  color: var(--blue);
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.db-field-type {
+  font-family: var(--mono);
+  color: var(--amber);
+  min-width: 60px;
+}
+
+.db-field-desc {
+  color: var(--text3);
+  flex: 1;
+}
+
+/* ── API ── */
+.api-section { background: var(--bg2); }
+
+.api-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.api-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.api-group-header {
+  padding: 14px 20px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  letter-spacing: 0.06em;
+}
+
+.api-route {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.api-route:last-child { border-bottom: none; }
+
+.method {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 2px;
+  text-align: center;
+}
+
+.method.GET { background: var(--blue-dim); color: var(--blue); }
+.method.POST { background: var(--green-dim); color: var(--green); }
+.method.PUT { background: var(--amber-dim); color: var(--amber); }
+.method.DELETE { background: var(--red-dim); color: var(--red); }
+
+.api-path {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+}
+
+/* ── STATE MACHINE ── */
+.state-section {}
+
+.state-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.state-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px 24px;
+  min-width: 140px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.state-box.active { border-color: var(--green); background: var(--green-dim); }
+.state-box.fail { border-color: var(--red); background: var(--red-dim); }
+.state-box.success { border-color: var(--green); }
+
+.state-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.state-box.active .state-name { color: var(--green); }
+.state-box.fail .state-name { color: var(--red); }
+
+.state-desc {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.state-arrow {
+  font-size: 20px;
+  color: var(--text3);
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+/* ── TIMELINE ── */
+.timeline {
+  max-width: 700px;
+}
+
+.tl-item {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 24px;
+  padding-bottom: 40px;
+  position: relative;
+}
+
+.tl-item:not(:last-child) .tl-line {
+  position: absolute;
+  left: 23px;
+  top: 48px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.tl-dot {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.tl-content h3 {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding-top: 12px;
+}
+
+.tl-content p {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+.tl-time {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--green);
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+  display: block;
+  padding-top: 14px;
+}
+
+/* ── TEAM ── */
+.team-section { background: var(--bg2); }
+
+.team-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  max-width: 480px;
+}
+
+.team-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--green-dim);
+  border: 1px solid var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.team-name {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.team-role {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.team-school {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 48px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-left {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.footer-left strong {
+  color: var(--green);
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.footer-right {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  text-align: right;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 48px;
+}
+
+/* ── BADGES ── */
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 48px;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 2px;
+  border: 1px solid;
+  letter-spacing: 0.06em;
+}
+
+.badge-green { color: var(--green); border-color: rgba(0,229,160,0.3); background: var(--green-dim); }
+.badge-amber { color: var(--amber); border-color: rgba(240,165,0,0.3); background: var(--amber-dim); }
+.badge-blue { color: var(--blue); border-color: rgba(77,159,255,0.3); background: var(--blue-dim); }
+.badge-red { color: var(--red); border-color: rgba(255,77,109,0.3); background: var(--red-dim); }
+.badge-purple { color: var(--purple); border-color: rgba(167,139,250,0.3); background: var(--purple-dim); }
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background: #0d0d14;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 24px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.code-block .kw { color: var(--purple); }
+.code-block .str { color: var(--green); }
+.code-block .num { color: var(--amber); }
+.code-block .cm { color: var(--text3); }
+.code-block .fn { color: var(--blue); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  section { padding: 72px 24px; }
+  .hero { padding: 100px 24px 60px; }
+  .hero-stats { gap: 32px; flex-wrap: wrap; }
+  .arch-grid { grid-template-columns: 1fr; }
+  .stack-cols { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 24px; text-align: center; }
+  .footer-right { text-align: center; }
+  .divider { margin: 0 24px; }
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s, transform 0.7s;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">TAMTAP</a>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#hardware">Hardware</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#database">Database</a></li>
+    <li><a href="#api">API</a></li>
+  </ul>
+  <span class="nav-badge">v2.2.0</span>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero" id="home">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-eyebrow">Grade 12 ICT B · Group 5 · FEU Roosevelt Marikina</div>
+  <h1>
+    Tap.<br>
+    <span class="accent">Verify.</span><br>
+    Present.
+  </h1>
+  <p class="hero-sub">
+    A locally hosted NFC-based attendance system running on Raspberry Pi 4B with camera verification, face detection, and a real-time LAN dashboard.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="https://github.com/CharlesNaig/TamTap" target="_blank" class="btn-primary">
+      ↗ View on GitHub
+    </a>
+    <a href="#overview" class="btn-secondary">
+      → Explore the project
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">2<span>.</span>2</div>
+      <div class="stat-label">Latest version</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">161</div>
+      <div class="stat-label">Commits</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3<span>.</span>5<span>s</span></div>
+      <div class="stat-label">Cycle budget</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">7</div>
+      <div class="stat-label">DB Collections</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Cloud deps</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── OVERVIEW ── -->
+<section id="overview">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title">From tap to recorded</h2>
+  <p class="section-desc">A student taps their NFC card. In under 3.5 seconds, TamTap reads, verifies, photographs, detects, records, and broadcasts — all on-premise.</p>
+
+  <div class="flow-container reveal">
+    <div class="flow-step" data-arrow="→">
+      <div class="flow-num">01</div>
+      <img class="flow-icon" src="https://img.icons8.com/?size=100&id=11420&format=png&color=ffffff" alt="NFC">
+      <h3>NFC Tap</h3>
+      <p>RC522 reader via SPI reads the student's MIFARE card UID in under 100ms.</p>
+    </div>
+    <div class="flow-step" data-arrow="→">
+      <div class="flow-num">02</div>
+      <img class="flow-icon" src="https://img.icons8.com/ios/50/ffffff/search--v1.png" alt="Validate">
+      <h3>Validate</h3>
+      <p>Lookup student in MongoDB (or JSON fallback). Check schedule and grace period.</p>
+    </div>
+    <div class="flow-step" data-arrow="→">
+      <div class="flow-num">03</div>
+      <img class="flow-icon" src="https://img.icons8.com/ios/50/ffffff/camera--v1.png" alt="Capture">
+      <h3>Capture</h3>
+      <p>Pi Camera v2 fires via rpicam-still subprocess. Photo saved by date.</p>
+    </div>
+    <div class="flow-step" data-arrow="→">
+      <div class="flow-num">04</div>
+      <img class="flow-icon" src="https://img.icons8.com/ios/50/ffffff/face-id.png" alt="Face Detect">
+      <h3>Face Detect</h3>
+      <p>OpenCV Haar cascade checks for a face ≥ 80×80px. Detection only — no recognition.</p>
+    </div>
+    <div class="flow-step" data-arrow="→">
+      <div class="flow-num">05</div>
+      <img class="flow-icon" src="https://img.icons8.com/ios/50/ffffff/save--v1.png" alt="Record">
+      <h3>Record</h3>
+      <p>Attendance saved to MongoDB. Green LED + buzzer confirm success.</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">06</div>
+      <img class="flow-icon" src="https://img.icons8.com/ios/50/ffffff/combo-chart--v1.png" alt="Broadcast">
+      <h3>Broadcast</h3>
+      <p>Socket.IO pushes attendance:new event to all connected dashboard clients on LAN.</p>
+    </div>
+  </div>
+
+  <div style="margin-top: 48px;" class="reveal">
+    <div class="badge-row">
+      <span class="badge badge-green">100% On-Premise</span>
+      <span class="badge badge-green">No Cloud Dependency</span>
+      <span class="badge badge-amber">Real-Time Dashboard</span>
+      <span class="badge badge-blue">Offline JSON Fallback</span>
+      <span class="badge badge-purple">Role-Based Access</span>
+      <span class="badge badge-red">XLSX + PDF Export</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── ARCHITECTURE ── -->
+<section class="arch-section" id="architecture">
+  <div class="section-label">System design</div>
+  <h2 class="section-title">Architecture</h2>
+  <p class="section-desc">Four distinct layers communicate cleanly — hardware speaks to Python, Python speaks to Node.js, Node.js speaks to the browser and MongoDB.</p>
+
+  <div class="arch-grid reveal">
+    <div class="arch-layer">
+      <span class="arch-layer-label hardware">⬡ Hardware Layer</span>
+      <h3>Raspberry Pi 4B</h3>
+      <p>RC522 NFC reader over SPI, Pi Camera v2 over CSI, I2C LCD 16×2 display, GPIO LEDs, buzzer, and three physical control buttons.</p>
+      <div class="arch-tags">
+        <span class="tag">SPI</span><span class="tag">I2C</span><span class="tag">CSI</span>
+        <span class="tag">GPIO 17/27/18</span><span class="tag">Bookworm OS</span>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <span class="arch-layer-label python">◈ Python Layer</span>
+      <h3>tamtap.py + database.py</h3>
+      <p>State machine running IDLE → CARD_DETECTED → CAMERA_ACTIVE → SUCCESS/FAIL. Calls database.py for unified MongoDB/JSON access. Posts to server via HTTP.</p>
+      <div class="arch-tags">
+        <span class="tag">Python 3.11</span><span class="tag">State machine</span>
+        <span class="tag">mfrc522</span><span class="tag">OpenCV</span>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <span class="arch-layer-label node">◇ Backend Layer</span>
+      <h3>server.js (Express + Socket.IO)</h3>
+      <p>REST API with 10 route modules, session-based auth with bcrypt, hardware API key guard, real-time Socket.IO broadcasting, and live systemd log streaming.</p>
+      <div class="arch-tags">
+        <span class="tag">Node.js 20</span><span class="tag">Express</span>
+        <span class="tag">Socket.IO</span><span class="tag">connect-mongo</span>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <span class="arch-layer-label frontend">○ Frontend Layer</span>
+      <h3>Multi-page HTML Dashboard</h3>
+      <p>No frameworks. Vanilla ES6+ with Fetch API, Tailwind CSS via CDN, Chart.js for analytics, SweetAlert2 for modals, and Socket.IO client for live updates.</p>
+      <div class="arch-tags">
+        <span class="tag">Vanilla JS</span><span class="tag">Tailwind CSS</span>
+        <span class="tag">Chart.js</span><span class="tag">Fetch API</span>
+      </div>
+    </div>
+    <div class="arch-layer" style="grid-column: 1 / -1;">
+      <span class="arch-layer-label data">⬟ Data Layer</span>
+      <h3>MongoDB (Local) + JSON Fallback</h3>
+      <p>Seven collections — students, teachers, admins, attendance, schedules, calendar, settings — all running locally on the Pi. When MongoDB is unreachable, the Python layer falls back to tamtap_users.json transparently.</p>
+      <div class="arch-tags">
+        <span class="tag">MongoDB 7+</span><span class="tag">Local instance</span>
+        <span class="tag">7 collections</span><span class="tag">JSON fallback</span>
+        <span class="tag">Offline mode</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── HARDWARE ── -->
+<section id="hardware">
+  <div class="section-label">Components</div>
+  <h2 class="section-title">Hardware specs</h2>
+  <p class="section-desc">All processing happens on the Pi. No external compute, no cloud.</p>
+
+  <div class="hw-grid reveal">
+    <div class="hw-card">
+      <div class="hw-card-icon"><img src="https://img.icons8.com/ios/50/00e5a0/raspberry-pi.png" alt="Raspberry Pi"></div>
+      <h3>Raspberry Pi 4B</h3>
+      <div class="hw-model">4GB RAM · Bookworm OS</div>
+      <p>Main compute unit hosting the NFC loop, Node.js server, and MongoDB — all simultaneously on a single board.</p>
+    </div>
+    <div class="hw-card">
+      <div class="hw-card-icon"><img src="https://img.icons8.com/ios/50/00e5a0/wifi-router.png" alt="NFC Reader"></div>
+      <h3>RC522 NFC Reader</h3>
+      <div class="hw-model">SPI · GPIO 8,9,10,11,25</div>
+      <p>Reads MIFARE card UIDs. Connected via SPI bus. Poll interval 100ms for responsive tap detection.</p>
+    </div>
+    <div class="hw-card">
+      <div class="hw-card-icon"><img src="https://img.icons8.com/ios/50/00e5a0/camera--v1.png" alt="Camera"></div>
+      <h3>Pi Camera v2</h3>
+      <div class="hw-model">5MP · CSI interface</div>
+      <p>Snapshot-only via rpicam-still subprocess. Photos stored by date for attendance records.</p>
+    </div>
+    <div class="hw-card">
+      <div class="hw-card-icon"><img src="https://img.icons8.com/ios/50/00e5a0/monitor--v1.png" alt="LCD"></div>
+      <h3>I2C LCD 16×2</h3>
+      <div class="hw-model">I2C · Address 0x27</div>
+      <p>Displays tap feedback in real time — student name, status (PRESENT/LATE/FAIL), and timestamp.</p>
+    </div>
+    <div class="hw-card">
+      <div class="hw-card-icon"><img src="https://img.icons8.com/ios/50/00e5a0/light-on--v1.png" alt="LEDs"></div>
+      <h3>LEDs + Buzzer</h3>
+      <div class="hw-model">GPIO 17 (green) · 27 (red) · 18 (buzzer)</div>
+      <p>Green LED + buzzer tone on success. Red LED + different tone on failure. Via relay module.</p>
+    </div>
+    <div class="hw-card">
+      <div class="hw-card-icon"><img src="https://img.icons8.com/ios/50/00e5a0/hand-cursor--v1.png" alt="Buttons"></div>
+      <h3>Control Buttons</h3>
+      <div class="hw-model">GPIO 5 (start) · 6 (restart) · 13 (stop)</div>
+      <p>Physical buttons with active LOW pull-ups. Stop requires a 2.5s hold to prevent accidental shutdown.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── STACK ── -->
+<section class="stack-section" id="stack">
+  <div class="section-label">Technology</div>
+  <h2 class="section-title">Full stack</h2>
+  <p class="section-desc">Three language environments working together: Python for hardware I/O, Node.js for the API, and vanilla JS for the browser.</p>
+
+  <div class="stack-cols reveal">
+    <div>
+      <div class="stack-col-title py">Python 3.11 — Hardware</div>
+      <div class="stack-item">
+        <div class="stack-dot py"></div>
+        <div><div class="stack-item-name">RPi.GPIO</div><div class="stack-item-desc">GPIO pin control for LEDs and buzzer</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot py"></div>
+        <div><div class="stack-item-name">mfrc522</div><div class="stack-item-desc">RC522 NFC reader driver over SPI</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot py"></div>
+        <div><div class="stack-item-name">opencv-headless</div><div class="stack-item-desc">Haar cascade face detection</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot py"></div>
+        <div><div class="stack-item-name">pymongo</div><div class="stack-item-desc">MongoDB driver + JSON fallback</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot py"></div>
+        <div><div class="stack-item-name">smbus</div><div class="stack-item-desc">I2C communication for LCD</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot py"></div>
+        <div><div class="stack-item-name">python-dotenv</div><div class="stack-item-desc">Environment variable loading</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="stack-col-title js">Node.js 20 — Backend</div>
+      <div class="stack-item">
+        <div class="stack-dot js"></div>
+        <div><div class="stack-item-name">express</div><div class="stack-item-desc">HTTP server and REST API</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot js"></div>
+        <div><div class="stack-item-name">socket.io</div><div class="stack-item-desc">Real-time WebSocket events</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot js"></div>
+        <div><div class="stack-item-name">mongodb</div><div class="stack-item-desc">Native MongoDB driver</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot js"></div>
+        <div><div class="stack-item-name">bcryptjs</div><div class="stack-item-desc">Password hashing</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot js"></div>
+        <div><div class="stack-item-name">exceljs + pdfkit</div><div class="stack-item-desc">XLSX and PDF report export</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot js"></div>
+        <div><div class="stack-item-name">express-rate-limit</div><div class="stack-item-desc">Rate limiting on login and API</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="stack-col-title fe">Frontend — Browser</div>
+      <div class="stack-item">
+        <div class="stack-dot fe"></div>
+        <div><div class="stack-item-name">Tailwind CSS</div><div class="stack-item-desc">Utility-first styling via CDN</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot fe"></div>
+        <div><div class="stack-item-name">Chart.js</div><div class="stack-item-desc">Attendance analytics charts</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot fe"></div>
+        <div><div class="stack-item-name">SweetAlert2</div><div class="stack-item-desc">Modal dialogs and alerts</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot fe"></div>
+        <div><div class="stack-item-name">Socket.IO client</div><div class="stack-item-desc">Real-time attendance feed</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot fe"></div>
+        <div><div class="stack-item-name">Fetch API</div><div class="stack-item-desc">All HTTP requests — no Axios</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-dot fe"></div>
+        <div><div class="stack-item-name">Vanilla ES6+</div><div class="stack-item-desc">No React, Vue, or Angular</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── DATABASE ── -->
+<section id="database">
+  <div class="section-label">Data model</div>
+  <h2 class="section-title">MongoDB collections</h2>
+  <p class="section-desc">Seven collections, all local — no cloud, no external dependency. A JSON file provides transparent offline fallback.</p>
+
+  <div class="db-grid reveal">
+    <div class="db-card">
+      <div class="db-card-header">
+        <img src="https://img.icons8.com/ios/50/00e5a0/graduation-cap--v1.png" alt="students">
+        <span class="db-collection-name">students</span>
+      </div>
+      <div class="db-card-body">
+        <div class="db-field"><span class="db-field-name">nfc_id</span><span class="db-field-type">String</span><span class="db-field-desc">Unique NFC card UID (indexed)</span></div>
+        <div class="db-field"><span class="db-field-name">tamtap_id</span><span class="db-field-type">String</span><span class="db-field-desc">Human-readable TamTap ID</span></div>
+        <div class="db-field"><span class="db-field-name">name</span><span class="db-field-type">String</span><span class="db-field-desc">Full name</span></div>
+        <div class="db-field"><span class="db-field-name">grade / section</span><span class="db-field-type">String</span><span class="db-field-desc">e.g. "12", "12-ICT-A"</span></div>
+      </div>
+    </div>
+    <div class="db-card">
+      <div class="db-card-header">
+        <img src="https://img.icons8.com/ios/50/00e5a0/checked-checkbox--v1.png" alt="attendance">
+        <span class="db-collection-name">attendance</span>
+      </div>
+      <div class="db-card-body">
+        <div class="db-field"><span class="db-field-name">nfc_id</span><span class="db-field-type">String</span><span class="db-field-desc">Card UID of tapper</span></div>
+        <div class="db-field"><span class="db-field-name">status</span><span class="db-field-type">String</span><span class="db-field-desc">present · late · absent · excused</span></div>
+        <div class="db-field"><span class="db-field-name">session</span><span class="db-field-type">String</span><span class="db-field-desc">AM or PM</span></div>
+        <div class="db-field"><span class="db-field-name">photo</span><span class="db-field-type">String</span><span class="db-field-desc">Captured photo filename</span></div>
+      </div>
+    </div>
+    <div class="db-card">
+      <div class="db-card-header">
+        <img src="https://img.icons8.com/ios/50/00e5a0/teacher.png" alt="teachers">
+        <span class="db-collection-name">teachers</span>
+      </div>
+      <div class="db-card-body">
+        <div class="db-field"><span class="db-field-name">username</span><span class="db-field-type">String</span><span class="db-field-desc">Unique login handle</span></div>
+        <div class="db-field"><span class="db-field-name">password</span><span class="db-field-type">String</span><span class="db-field-desc">bcrypt hash</span></div>
+        <div class="db-field"><span class="db-field-name">role_type</span><span class="db-field-type">String</span><span class="db-field-desc">admin · adviser · teacher</span></div>
+        <div class="db-field"><span class="db-field-name">sections_handled</span><span class="db-field-type">Array</span><span class="db-field-desc">Sections this teacher manages</span></div>
+      </div>
+    </div>
+    <div class="db-card">
+      <div class="db-card-header">
+        <img src="https://img.icons8.com/?size=100&id=23&format=png&color=00e5a0" alt="schedules">
+        <span class="db-collection-name">schedules</span>
+      </div>
+      <div class="db-card-body">
+        <div class="db-field"><span class="db-field-name">section</span><span class="db-field-type">String</span><span class="db-field-desc">Unique section identifier</span></div>
+        <div class="db-field"><span class="db-field-name">weekly_schedule</span><span class="db-field-type">Object</span><span class="db-field-desc">start/end per day Mon–Sat</span></div>
+        <div class="db-field"><span class="db-field-name">grace_period</span><span class="db-field-type">Number</span><span class="db-field-desc">Minutes before marked late (default 20)</span></div>
+        <div class="db-field"><span class="db-field-name">absent_threshold</span><span class="db-field-type">Number</span><span class="db-field-desc">Minutes before marked absent (default 60)</span></div>
+      </div>
+    </div>
+    <div class="db-card">
+      <div class="db-card-header">
+        <img src="https://img.icons8.com/ios/50/00e5a0/calendar--v1.png" alt="calendar">
+        <span class="db-collection-name">calendar</span>
+      </div>
+      <div class="db-card-body">
+        <div class="db-field"><span class="db-field-name">type</span><span class="db-field-type">String</span><span class="db-field-desc">suspension · no-class · saturday-makeup</span></div>
+        <div class="db-field"><span class="db-field-name">date</span><span class="db-field-type">String</span><span class="db-field-desc">Single YYYY-MM-DD</span></div>
+        <div class="db-field"><span class="db-field-name">startDate/endDate</span><span class="db-field-type">String</span><span class="db-field-desc">Range for multi-day suspensions</span></div>
+        <div class="db-field"><span class="db-field-name">section</span><span class="db-field-type">String</span><span class="db-field-desc">Section-specific no-class</span></div>
+      </div>
+    </div>
+    <div class="db-card">
+      <div class="db-card-header">
+        <img src="https://img.icons8.com/ios/50/00e5a0/settings--v1.png" alt="settings">
+        <span class="db-collection-name">settings + admins</span>
+      </div>
+      <div class="db-card-body">
+        <div class="db-field"><span class="db-field-name">key</span><span class="db-field-type">String</span><span class="db-field-desc">Setting key (unique)</span></div>
+        <div class="db-field"><span class="db-field-name">value</span><span class="db-field-type">Mixed</span><span class="db-field-desc">e.g. Saturday toggle on/off</span></div>
+        <div class="db-field"><span class="db-field-name">username</span><span class="db-field-type">String</span><span class="db-field-desc">Admin account login</span></div>
+        <div class="db-field"><span class="db-field-name">password</span><span class="db-field-type">String</span><span class="db-field-desc">bcrypt hash</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── API ── -->
+<section class="api-section" id="api">
+  <div class="section-label">REST API</div>
+  <h2 class="section-title">API reference</h2>
+  <p class="section-desc">Base URL: <code style="font-family:var(--mono);color:var(--green);font-size:14px">http://&lt;pi-ip&gt;:3000/api</code> — session auth for most routes, hardware API key for the Pi bridge.</p>
+
+  <div class="api-groups reveal">
+    <div class="api-group">
+      <div class="api-group-header">Authentication</div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/auth/login</span></div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/auth/logout</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/auth/me</span></div>
+    </div>
+    <div class="api-group">
+      <div class="api-group-header">Attendance</div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/attendance</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/attendance/:date</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/attendance/range</span></div>
+    </div>
+    <div class="api-group">
+      <div class="api-group-header">Students & Teachers</div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/students</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/students/:nfc_id</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/teachers</span></div>
+    </div>
+    <div class="api-group">
+      <div class="api-group-header">Admin (admin-only)</div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/admin/students</span></div>
+      <div class="api-route"><span class="method PUT">PUT</span><span class="api-path">/api/admin/students/:nfc_id</span></div>
+      <div class="api-route"><span class="method DELETE">DELETE</span><span class="api-path">/api/admin/students/:nfc_id</span></div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/admin/students/bulk</span></div>
+    </div>
+    <div class="api-group">
+      <div class="api-group-header">Schedules</div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/schedules</span></div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/schedules</span></div>
+      <div class="api-route"><span class="method PUT">PUT</span><span class="api-path">/api/schedules/:section</span></div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/schedules/import</span></div>
+    </div>
+    <div class="api-group">
+      <div class="api-group-header">Export + Notifications</div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/export/xlsx</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/export/pdf</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/notifications/pending</span></div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/notifications/mark-excused</span></div>
+    </div>
+    <div class="api-group">
+      <div class="api-group-header">Hardware Bridge (API key)</div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/hardware/attendance</span></div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/hardware/fail</span></div>
+      <div class="api-route"><span class="method POST">POST</span><span class="api-path">/api/hardware/status</span></div>
+    </div>
+    <div class="api-group">
+      <div class="api-group-header">Stats + Health</div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/stats</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/stats/weekly</span></div>
+      <div class="api-route"><span class="method GET">GET</span><span class="api-path">/api/health</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── STATE MACHINE ── -->
+<section id="statemachine">
+  <div class="section-label">Core logic</div>
+  <h2 class="section-title">State machine</h2>
+  <p class="section-desc">Every attendance cycle follows a strict linear state flow. No skipping, no parallel transitions — every cycle returns to IDLE within 3.5 seconds.</p>
+
+  <div class="state-flow reveal">
+    <div class="state-box active">
+      <div class="state-name">IDLE</div>
+      <div class="state-desc">Polling NFC every 100ms</div>
+    </div>
+    <div class="state-arrow">→</div>
+    <div class="state-box">
+      <div class="state-name">CARD_DETECTED</div>
+      <div class="state-desc">UID read, DB lookup</div>
+    </div>
+    <div class="state-arrow">→</div>
+    <div class="state-box">
+      <div class="state-name">CAMERA_ACTIVE</div>
+      <div class="state-desc">Photo capture ≤1.5s</div>
+    </div>
+    <div class="state-arrow">↗</div>
+    <div class="state-box success">
+      <div class="state-name">SUCCESS</div>
+      <div class="state-desc">Green LED + POST</div>
+    </div>
+    <div class="state-arrow">↘</div>
+    <div class="state-box fail">
+      <div class="state-name">FAIL</div>
+      <div class="state-desc">Red LED + buzzer</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px;" class="reveal">
+    <div class="code-block">
+<span class="cm"># Timing budget breakdown (total ≤ 3.5 seconds)</span>
+<span class="kw">NFC_POLL_INTERVAL</span>      = <span class="num">0.1</span>    <span class="cm"># s  — 100ms NFC read loop</span>
+<span class="kw">SCHEDULE_VALIDATE</span>      = <span class="num">~0.05</span>  <span class="cm"># s  — DB lookup + schedule check</span>
+<span class="kw">CAMERA_CAPTURE_TIME</span>    = <span class="num">1200</span>   <span class="cm"># ms — rpicam-still shutter</span>
+<span class="kw">CAMERA_TIMEOUT</span>         = <span class="num">2.5</span>    <span class="cm"># s  — subprocess hard cap</span>
+<span class="kw">FACE_DETECTION_TIMEOUT</span> = <span class="num">1.0</span>    <span class="cm"># s  — Haar cascade cap</span>
+<span class="kw">MIN_FACE_SIZE</span>          = <span class="num">(80, 80)</span> <span class="cm"># px — minimum face dimensions</span>
+<span class="kw">LED_LCD_UPDATE</span>         = <span class="num">~0.1</span>   <span class="cm"># s  — feedback output</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── TEAM ── -->
+<section class="team-section" id="team">
+  <div class="section-label">Built by</div>
+  <h2 class="section-title">The team</h2>
+  <p class="section-desc">A Grade 12 ICT capstone project at FEU Roosevelt Marikina, school year 2025–2026.</p>
+
+  <div class="team-card reveal">
+    <div class="team-avatar">CG</div>
+    <div>
+      <div class="team-name">Charles Giann Marcelo</div>
+      <div class="team-role">Lead Developer</div>
+      <div class="team-school">FEU Roosevelt Marikina · Grade 12 ICT B · Group 5</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 48px; display: flex; flex-wrap: wrap; gap: 16px;" class="reveal">
+    <div class="badge badge-green">MIT License</div>
+    <div class="badge badge-amber">S.Y. 2025–2026</div>
+    <div class="badge badge-blue">Capstone Project</div>
+    <div class="badge badge-purple">Data Privacy Act Compliant</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-left">
+    <strong>TAMTAP v2.2.0</strong>
+    NFC-Based Attendance System with Camera Verification
+  </div>
+  <div class="footer-right">
+    Built with <img src="https://img.icons8.com/ios/20/00e5a0/hearts--v1.png" alt="love" style="width:14px;height:14px;vertical-align:middle;filter:invert(72%) sepia(60%) saturate(400%) hue-rotate(115deg) brightness(1.1)"> at FEU Roosevelt Marikina<br>
+    <a href="https://github.com/CharlesNaig/TamTap" target="_blank" style="color:var(--green);text-decoration:none;font-family:var(--mono)">github.com/CharlesNaig/TamTap</a>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
